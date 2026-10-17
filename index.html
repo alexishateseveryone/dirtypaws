@@ -131,6 +131,21 @@ button{font:inherit;color:inherit;cursor:pointer}
 #paws{display:flex;gap:4px;font-size:32px;color:var(--berry);filter:drop-shadow(0 2px 0 rgba(0,0,0,.5))}
 #paws .off{color:rgba(255,255,255,.35)}
 #score{font-family:var(--font-score);font-size:30px;letter-spacing:.05em;font-variant-numeric:tabular-nums;color:#ffe27a;-webkit-text-stroke:6px var(--ink);paint-order:stroke fill;text-shadow:0 3px 0 var(--ink)}
+#manaBar{display:flex;align-items:center;gap:7px;margin-top:6px;font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;color:#bfe9ff}
+#manaBar svg{width:22px;height:26px;flex:none;filter:drop-shadow(0 0 5px #3fb4ff)}
+#manaBar .mb{position:relative;width:min(120px,28vw);height:13px;border-radius:99px;background:rgba(20,18,60,.75);border:2px solid #bfe9ff;overflow:hidden}
+#manaBar .mb b{display:block;height:100%;width:0;background:linear-gradient(90deg,#2f8cff,#6fd6ff);border-radius:99px;transition:width .2s}
+#manaBar.full .mb{animation:manaPulse .9s ease-in-out infinite}#manaBar.full #manaTxt{color:#fff;text-shadow:0 0 8px #4fc3ff}
+@keyframes manaPulse{50%{box-shadow:0 0 14px 3px #4fc3ff;border-color:#fff}}
+#skillBtn{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(18px,env(safe-area-inset-bottom,0px));width:84px;height:84px;border-radius:50%;border:4px solid var(--ink);padding:0;cursor:pointer;pointer-events:auto;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+ background:conic-gradient(#4fc3ff calc(var(--m,0)*1%),rgba(30,26,80,.78) 0);box-shadow:0 5px 0 rgba(0,0,0,.3);display:grid;place-items:center;color:#fff;opacity:.85}
+#skillBtn::before{content:'';position:absolute;inset:8px;border-radius:50%;background:rgba(24,20,70,.92)}
+#skillBtn svg{position:relative;width:30px;height:34px;filter:drop-shadow(0 0 5px #3fb4ff)}
+#skillBtn #skillName{position:absolute;top:-24px;left:50%;transform:translateX(-50%);white-space:nowrap;font:800 12px var(--font);color:#fff;text-shadow:0 2px 0 var(--ink),0 0 8px #4fc3ff;-webkit-text-stroke:3px var(--ink);paint-order:stroke fill;pointer-events:none}
+#skillBtn.full{opacity:1;animation:skillGlow .8s ease-in-out infinite}
+@keyframes skillGlow{50%{box-shadow:0 0 0 6px rgba(79,195,255,.35),0 0 26px 8px #4fc3ff;transform:scale(1.07)}}
+@media (max-height:520px){#skillBtn{width:68px;height:68px}}
+#flash{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(circle,rgba(190,255,240,.85),rgba(79,195,255,.35) 60%,rgba(79,195,255,0) 100%);z-index:50}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .chip{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;padding:3px 9px;border-radius:99px;background:var(--ink);border:1.5px solid var(--lemon);color:var(--lemon)}
 .chip.sh{border-color:#ff9ec0;color:#ff9ec0}
@@ -200,7 +215,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 </section>
 
 <div id="hud" class="pad" hidden>
-  <div class="hud-l"><div id="paws" aria-label="Health"></div><div class="chips" id="chips"></div></div>
+  <div class="hud-l"><div id="paws" aria-label="Health"></div><div class="chips" id="chips"></div><div id="manaBar"><svg viewBox="0 0 24 28"><path d="M12 1l8 11-8 15L4 12z" fill="#4fb8ff" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 1l3 11-3 15-3-15z" fill="#bfe9ff" opacity=".8"/></svg><div class="mb"><b id="manaFill"></b></div><span id="manaTxt">MANA 0</span></div></div>
   <div id="score" aria-label="Score">000000</div>
   <div class="hud-r">
     <div class="row">
@@ -209,9 +224,11 @@ button{font:inherit;color:inherit;cursor:pointer}
     </div>
     <div class="meta" id="wave">WAVE 1</div>
   </div>
+  <button id="skillBtn" type="button" aria-label="Use ship skill"><svg viewBox="0 0 24 28"><path d="M12 1l8 11-8 15L4 12z" fill="#4fb8ff" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 1l3 11-3 15-3-15z" fill="#bfe9ff" opacity=".8"/></svg><span id="skillName"></span></button>
 </div>
 <div id="bossBar" hidden><span id="bossName">SIR BARKS-A-LOT</span><i><b id="bossFill"></b></i></div>
 <div id="banner" aria-live="polite"></div>
+<div id="flash"></div>
 <div id="toast" aria-live="polite"></div>
 <div id="stick" hidden><i></i></div>
 
@@ -232,11 +249,13 @@ button{font:inherit;color:inherit;cursor:pointer}
 <div class="scr pad" id="instScr" hidden><div class="card"><h2>Install</h2><p id="instText"></p><button class="btn green" id="instOk" type="button">Got it</button></div></div>
 <div class="scr pad" id="setScr" hidden><div class="card">
   <h2>Settings</h2>
-  <div class="set-row"><span>Volume</span><input id="setVol" type="range" min="0" max="100" value="70" aria-label="Volume"></div>
+  <div class="set-row"><span>Volume</span><input id="setVol" type="range" min="0" max="100" value="70" aria-label="Master volume"></div>
+  <div class="set-row"><span>Music</span><input id="setMus" type="range" min="0" max="100" value="80" aria-label="Music volume"></div>
+  <div class="set-row"><span>SFX</span><input id="setSfx" type="range" min="0" max="100" value="100" aria-label="Sound effects volume"></div>
   <div class="set-row"><span>Screen shake</span><button class="tog" id="setShake" type="button" aria-pressed="true" aria-label="Screen shake"></button></div>
   <div class="set-row"><span>Auto-fire<small>Shoots on its own</small></span><button class="tog" id="setAuto" type="button" aria-pressed="false" aria-label="Auto-fire"></button></div>
   <div class="set-row"><span>Graphics</span><div class="pill" id="setQ"><button type="button" data-v="low" aria-pressed="false">Low</button><button type="button" data-v="high" aria-pressed="true">High</button></div></div>
-  <div class="keys"><b>Move</b> WASD or arrows<br><b>Shoot</b> Space, Z or J<br><b>Pause</b> P or Esc<br><b>Touch</b> drag to fly, auto-fire on</div>
+  <div class="keys"><b>Move</b> WASD or arrows<br><b>Shoot</b> Space, Z or J<br><b>Skill</b> E, K or Shift (mana full)<br><b>Pause</b> P or Esc<br><b>Touch</b> drag to fly, auto-fire on</div>
   <button class="btn gold" id="setBack" type="button">Back</button>
 </div></div>
 
@@ -257,7 +276,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t,rand=(a,b
 const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const mix=(a,b,t)=>'#'+new T.Color(a).lerp(new T.Color(b),t).getHexString();
 function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-const SET=Object.assign({vol:.7,shake:true,auto:false,q:'high'},store.get('dp.set',{}));
+const SET=Object.assign({vol:.7,mus:.8,sfx:1,shake:true,auto:false,q:'high'},store.get('dp.set',{}));
 
 /* ---------- renderer, camera, lights ---------- */
 const stage=$('#stage');
@@ -330,7 +349,7 @@ const pawTex=pawCanvas(0),pawOutTex=pawCanvas(9);
 
 /* ---------- audio (tiny synth, starts after the first click) ---------- */
 let AC=null,MG=null,muted=store.get('dp.mute',false);
-function applyVol(){if(MG)MG.gain.value=muted?0:SET.vol}
+function applyVol(){if(MG)MG.gain.value=muted?0:SET.vol*SET.sfx}
 function ac(){
   if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();MG=AC.createGain();MG.connect(AC.destination);applyVol()}catch(e){}}
   if(AC&&AC.state==='suspended')AC.resume();return AC;
@@ -1088,8 +1107,8 @@ function spawnCrate(){const g=buildCrate(),x=B.r+2.5,y=rand(B.t-6,B.t-2.5);g.pos
 function openCrate(e){
   burst(e.x,e.y,['#d9a35a','#8a5a2b','#ffd54a','#ff5a6a'],18,6,.3,.8);ring(e.x,e.y,'#ffd54a',4,.5);sfx.pickup();score+=e.score;
   const pool=['fish','catnip','yarn','rapid'].concat(SPECIALS);if(P.hp>=P.max)pool.splice(0,1);
-  for(let i=0;i<3;i++){const k=pool.splice((Math.random()*pool.length)|0,1)[0];dropPickup(e.x+(1-i)*.9,e.y+(1-i)*1.5,k)}
-  toast('Loot box! 3 rewards')}
+  dropPickup(e.x,e.y,'manaL');for(let i=0;i<2;i++){const k=pool.splice((Math.random()*pool.length)|0,1)[0];dropPickup(e.x+(i?1:-1)*1.1,e.y+(i?-1.4:1.4),k)}
+  toast('Loot box! +20 mana and 2 upgrades')}
 const rockGeos=[0,1,2].map(i=>sharedG(lumpy(new T.IcosahedronGeometry(1,2),.2,i*2.3+1)));
 function spawnRock(size,x,y,vx,vy){
   const r=[0,.6,1.05,1.6][size],m=new T.Mesh(pick(rockGeos),rockMat());m.scale.set(r*rand(.85,1.15),r*rand(.85,1.15),r);m.position.set(x,y,0);m.rotation.set(rand(0,6),rand(0,6),rand(0,6));scene.add(m);
@@ -1163,8 +1182,8 @@ function updateEnemies(dt0){
 }
 
 /* ---------- pickups: clay badges with a drawn icon ---------- */
-const PK={fish:'#5fd0ff',catnip:'#7ddc4a',yarn:'#ff7fb0',rapid:'#ffd54a',cats:'#ffa75a',wave:'#2fc2f2',flame:'#ff7a3c',laser:'#b07aff',homing:'#b58a5a'};
-const PKN={fish:'Fish: +1 health',catnip:'More Bullets!',yarn:'Yarn Shield',rapid:'Rapid Fire',cats:'More Cats!',wave:'Wave Bullet!',flame:'Flamethrower!',laser:'Tuna Laser!',homing:'Hairball Missiles!'};
+const PK={fish:'#5fd0ff',catnip:'#7ddc4a',yarn:'#ff7fb0',rapid:'#ffd54a',cats:'#ffa75a',wave:'#2fc2f2',flame:'#ff7a3c',laser:'#b07aff',homing:'#b58a5a',mana:'#4fc3ff',manaL:'#4fc3ff'};
+const PKN={fish:'Fish: +1 health',catnip:'More Bullets!',yarn:'Yarn Shield',rapid:'Rapid Fire',cats:'More Cats!',wave:'Wave Bullet!',flame:'Flamethrower!',laser:'Tuna Laser!',homing:'Hairball Missiles!',mana:'Mana',manaL:'Mana burst'};
 const SPECIALS=['cats','wave','flame','laser','homing'];
 const iconTexCache={};
 function iconTex(kind){
@@ -1185,7 +1204,17 @@ function iconTex(kind){
   const t=new T.CanvasTexture(c);t.encoding=T.sRGBEncoding;return iconTexCache[kind]=t;
 }
 let pid=0;
+const SHARD_G=sharedG(new T.OctahedronGeometry(1,0));
+const manaMat=Object.assign(clay({color:'#cfeeff',emissive:'#2f9bff',ei:1.15,bump:.12}),{userData:{own:false}});
+function buildMana(big){
+  const g=new T.Group();
+  M(SHARD_G,manaMat,[.34,.8,.34],[0,0,0],g);
+  [[.34,-.14,-.55],[-.32,-.18,.6]].forEach(([x,y,r])=>{const m=M(SHARD_G,manaMat,[.2,.46,.2],[x,y,0],g);m.rotation.z=r});
+  g.add(mkSprite(glowTex,'#2f9bff',0,big?2.6:2.1,true,.5),mkSprite(glowTex,'#9fdcff',0,big?1.1:.9,true,.45));
+  g.scale.setScalar(big?1.6:1.05);return g;
+}
 function buildPickupGroup(kind){
+  if(kind==='mana'||kind==='manaL')return buildMana(kind==='manaL');
   const g=new T.Group();
   const rim=M(G.cyl,CL(INK,.3),[.72,.24,.72],[0,0,0],g);rim.rotation.x=Math.PI/2;
   M(new T.CircleGeometry(.62,32),new T.MeshBasicMaterial({map:iconTex(kind)}),null,[0,0,.13],g).geometry.userData.shared=false;
@@ -1201,7 +1230,7 @@ function dropPickup(x,y,kind){
 }
 function updatePickups(dt){
   for(let i=pickups.length-1;i>=0;i--){
-    const p=pickups[i];p.t+=dt;p.x-=2.6*dt;p.y=p.y0+Math.sin(p.t*3)*.35;p.g.position.set(p.x,p.y,0);p.g.rotation.y=Math.sin(p.t*2)*.5;
+    const p=pickups[i];p.t+=dt;p.x-=2.6*dt;p.y=p.y0+Math.sin(p.t*3)*.35;if(p.kind==='mana'||p.kind==='manaL'){p.g.rotation.y=p.t*2.2;if(state==='playing'&&!(P.down>0)&&NET.role!=='guest'){const dx=P.x-p.x,dy=P.y-p.y,d=Math.hypot(dx,dy);if(d<4.5&&d>.01){const pull=(1-d/4.5)*7*dt;p.x+=dx/d*pull*3;p.y0+=dy/d*pull*3}}if(Math.random()<dt*7)emit(p.x+rand(-.3,.3),p.y+rand(-.5,.5),rand(-.3,.3),rand(.3,1),rand(.05,.1),pick(['#9fdcff','#ffffff','#4fc3ff']),.5,0)}else p.g.rotation.y=Math.sin(p.t*2)*.5;p.g.position.set(p.x,p.y,0);
     if(state==='playing'&&!(P.down>0)&&NET.role!=='guest'&&Math.hypot(P.x-p.x,P.y-p.y)<p.r+P.hit+.3){collect(p.kind,p.x,p.y);scene.remove(p.g);pickups.splice(i,1)}
     else if(p.x<B.l-3){scene.remove(p.g);pickups.splice(i,1)}
   }
@@ -1209,7 +1238,7 @@ function updatePickups(dt){
 
 /* ---------- game state ---------- */
 let bossCount=0,dropCD=0,state='title',timeScale=1,diff=0,elapsed=0,score=0,kills=0,wave=1,best=store.get('dp.best',0),spawnT=1,rockT=1,bossAt=2500,boss=null,touch=false,dyingT=0,lastScore=-1,lastBiome=0,prevState='title',makerFrom='title',hordeQ=null;
-const P={x:0,y:0,vx:0,vy:0,hp:3,max:3,hit:.8,inv:0,wl:1,shield:0,fireT:0,intro:0,sp:null,spT:0,rapidT:0,beamT:0};
+const P={mana:0,fz:0,x:0,y:0,vx:0,vy:0,hp:3,max:3,hit:.8,inv:0,wl:1,shield:0,fireT:0,intro:0,sp:null,spT:0,rapidT:0,beamT:0};
 const keys={},sv={x:0,y:0};
 const ST=()=>SHIPS[OPT.ship];
 const shieldM=new T.Mesh(G.sph,new T.MeshBasicMaterial({color:'#ff9ec0',transparent:true,opacity:.32,depthWrite:false}),undefined);shieldM.scale.setScalar(1.75);shieldM.visible=false;shieldM.renderOrder=5;scene.add(shieldM);
@@ -1218,11 +1247,12 @@ const show=(id,v)=>{$(id).hidden=!v};
 function banner(t,sub){const b=$('#banner');b.classList.toggle('sm',/is down/i.test(t));b.innerHTML=t+(sub?'<small>'+sub+'</small>':'');b.classList.remove('show');void b.offsetWidth;b.classList.add('show')}
 function toast(t){const el=$('#toast');el.textContent=t;el.classList.remove('show');void el.offsetWidth;el.classList.add('show')}
 function drawPaws(){let h='';for(let i=0;i<P.max;i++)h+='<svg class="paw'+(i<P.hp?'':' off')+'"><use href="#paw"/></svg>';$('#paws').innerHTML=h}
-let lastChips='';
+let lastChips=null;
 function drawChips(){
-  let h='';
+  drawMana();let h='';
   if(P.wl>1)h+='<span class="chip">BULLETS x'+Math.min(9,P.wl+ST().extra)+'</span>';
   if(P.sp)h+='<span class="chip sp">'+PKN[P.sp].replace('!','').toUpperCase()+(P.spT>999?'':' '+Math.ceil(P.spT)+'s')+'</span>';
+  if(P.fz>0)h+='<span class="chip sp">SUGAR RUSH '+Math.ceil(P.fz)+'s</span>';
   if(P.rapidT>0)h+='<span class="chip">RAPID FIRE '+Math.ceil(P.rapidT)+'s</span>';
   if(P.shield>0)h+='<span class="chip sh">YARN '+Math.ceil(P.shield)+'s</span>';
   if(h!==lastChips){lastChips=h;$('#chips').innerHTML=h}
@@ -1288,7 +1318,7 @@ beam.visible=lzMuz.visible=chOrb.visible=false;scene.add(beam);
 /* ---------- combat ---------- */
 function shootPose(){cat.state.shoot=1;sq.kick(2.2);sfx.shoot()}
 function fire(){
-  const s=ST(),mx=P.x+ship.muzzle*rig.scale.x,sp=P.sp,rf=P.rapidT>0?.55:1,wl=P.wl;
+  const s=ST(),mx=P.x+ship.muzzle*rig.scale.x,sp=P.sp,rf=(P.rapidT>0?.55:1)*fzMul(P),wl=P.wl;
   if(sp==='laser')return;
   if(sp==='flame'){
     P.fireT=.05*rf;for(let k=0;k<2;k++)pbullet({x:mx,y:P.y+rand(-.15,.15),vx:s.bspeed*.5+rand(0,5),vy:rand(-2.4,2.4),dmg:.3*s.dmg+.1,kind:'flame',life:.55,pierce:true,tick:.12,r:.4,size:1.1,grow:2.4});
@@ -1316,12 +1346,14 @@ function killEnemy(e){
   else{burst(e.x,e.y,col,boss_?16:7,boss_?7:5,.26,.6);ring(e.x,e.y,col[0],e.r*2.2,.35);sfx.hit();shake=Math.max(shake,boss_?.5:.08);
     e.g.scale.set(1,1,1);if(e.flash)e.flash.visible=false;scene.add(e.g);falling.push({g:e.g,x:e.x,y:e.y,vx:(e.vx||0)*.5-1,vy:boss_?1:rand(1.5,3.5),vr:rand(1.6,3)*(boss_?.5:1),t:0,boss:boss_,sm:0,col:base})}
   score+=e.score;kills++;
+  if(!boss_&&!e.crate&&Math.random()<(e.rock?(e.size>=2?.5:.32):.45))dropPickup(e.x,e.y+rand(-.3,.3),'mana');
   if(e.rock&&e.size>1)for(let k=0;k<2;k++)spawnRock(e.size-1,e.x,e.y+(k?.5:-.5),e.vx*.8+rand(-1,1),(k?1:-1)*rand(1.5,3));
   if(!boss_&&(!e.rock||e.size===3)&&dropCD<=0&&Math.random()<.07){dropPickup(e.x,e.y);dropCD=16}
-  if(boss_){boss=null;bossAt=score+3500+kills*8;show('#bossBar',false);banner((e.name||'Boss')+' is down!');dropPickup(e.x-1,e.y+1.5);dropPickup(e.x-1,e.y-1.5)}
+  if(boss_){boss=null;bossAt=score+3500+kills*8;show('#bossBar',false);banner((e.name||'Boss')+' is down!');dropPickup(e.x-1,e.y+1.5);dropPickup(e.x-1,e.y-1.5);for(let k=0;k<7;k++)dropPickup(e.x-.5+rand(-1.2,1.2),e.y+rand(-2.4,2.4),'mana')}
 }
 function loseSpecial(){P.sp=null;P.spT=0;clearAllies();beam.visible=lzMuz.visible=chOrb.visible=false}
 function collect(k,x,y){
+  if(k==='mana'||k==='manaL'){const v=k==='manaL'?20:6;P.mana=Math.min(MANA_MAX,(P.mana||0)+v);sfx.pickup();ring(x,y,'#4fc3ff',k==='manaL'?4:2.2,.4);burst(x,y,['#4fc3ff','#bfe9ff','#ffffff'],k==='manaL'?16:7,5,.2,.5);if(P.mana>=MANA_MAX&&!P._mf){P._mf=true;sfx.power();toast('SKILL READY!  (E / K / tap button)')}if(P.mana<MANA_MAX)P._mf=false;score+=5;return}
   sfx.pickup();ring(x,y,PK[k],2.6,.4);burst(x,y,PK[k],10,5,.22,.5);
   if(k==='fish'){P.hp=Math.min(P.max,P.hp+1);drawPaws()}
   else if(k==='catnip'){if(P.wl>=5){score+=250;toast('Max bullets! +250')}else{P.wl++;sfx.power();toast('More Bullets! x'+Math.min(9,P.wl+ST().extra))}}
@@ -1331,6 +1363,50 @@ function collect(k,x,y){
   if(k==='fish')toast(PKN[k]);
   score+=25;drawChips();
 }
+
+/* ---------- mana + ship skills ---------- */
+const MANA_MAX=100,SKILL_NAMES=['Sugar Rush','Zoomie Barrage','Tuna Tsunami','Hairball Swarm','Giga Laser'],skills=[];let lastMana=-1,gigT=0;
+const fzMul=w=>w.fz>0?1-.72*(1-w.fz/5):1;
+const shipOf=w=>w===P?OPT.ship:(NET.guestOpt?NET.guestOpt.ship:0),stOf=w=>SHIPS[shipOf(w)]||SHIPS[0],muzzleOf=w=>w===P?P.x+ship.muzzle*rig.scale.x:P2.x+(rig2?rig2.ship.muzzle*.7:1.5);
+const gig=new T.Group(),gigO=new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshBasicMaterial({map:bandTex,color:'#2fe0c0',transparent:true,depthWrite:false,opacity:.8})),gigC=new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshBasicMaterial({color:'#e8fffb',transparent:true,depthWrite:false,opacity:.95}));
+gig.add(gigO,gigC);gig.visible=false;gig.renderOrder=7;scene.add(gig);
+function gigHold(x,y,dur){gigT=dur;gig.visible=true;const len=B.r+4-x,pu=1+Math.sin(U.time.value*70)*.08;gig.position.set(x+len/2,y,.6);gig.scale.set(len,1,1);gigO.scale.set(1,7*pu,1);gigC.scale.set(1,1.8*pu,1)}
+function gigUpdate(dt){if(gigT>0){gigT-=dt;if(gigT<=0)gig.visible=false}}
+function flashFx(){const el=$('#flash');el.style.transition='none';el.style.opacity='.4';void el.offsetWidth;el.style.transition='opacity .7s ease-out';el.style.opacity='0'}
+function castSkill(w){
+  if(!w||(w.mana||0)<MANA_MAX-.01)return false;const si=shipOf(w),st=stOf(w),mx=muzzleOf(w);w.mana=0;if(w===P)P._mf=false;
+  sfx.power();toast(SKILL_NAMES[si]+'!');shake=Math.max(shake,.35);ring(w.x,w.y,'#4fc3ff',6,.6);burst(w.x,w.y,['#4fc3ff','#bfe9ff','#ffffff'],20,8,.25,.7);
+  if(si===0)w.fz=5;
+  else if(si===1)skills.push({w,k:'barrage',t:0,dur:2,acc:0});
+  else if(si===2){for(let i=0;i<20;i++){const a=(i-9.5)*.045;pbullet({x:mx+(i%2)*.4,y:w.y+(i-9.5)*.05,vx:Math.cos(a)*st.bspeed*1.15,vy:Math.sin(a)*st.bspeed*1.15,dmg:st.dmg*1.6,kind:'bullet',pierce:true,tick:.3,size:1.9,r:.5})}muzzle(mx,w.y,'#ffd23a',12);sfx.boom()}
+  else if(si===3)skills.push({w,k:'missiles',t:0,dur:5,acc:0});
+  else{skills.push({w,k:'giga',t:0,dur:1.4,acc:0.2});flashFx();shake=Math.max(shake,.6);if(NET.role==='host')NET.evq.push(['z',r3(nxOf(mx)),r3(nyOf(w.y)),1.4])}
+  drawChips();return true;
+}
+function skillsUpdate(dt){
+  for(let i=skills.length-1;i>=0;i--){
+    const f=skills[i],w=f.w,alive=w===P?(P.down<=0&&state==='playing'):!!(P2&&P2.alive&&state==='playing');
+    f.t+=dt;if(!alive||f.t>=f.dur){skills.splice(i,1);continue}
+    const st=stOf(w),mx=muzzleOf(w);f.acc+=dt;
+    if(f.k==='barrage'){while(f.acc>=.035){f.acc-=.035;const a=rand(-.3,.3),sp=st.bspeed*1.15;pbullet({x:mx,y:w.y+rand(-.55,.55),vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,dmg:st.dmg*.75,kind:'bullet',size:1.3,r:.4});if(((f.n=(f.n||0)+1)%3)===0)sfx.shoot()}if(w===P)cat.state.shoot=1}
+    else if(f.k==='missiles'){while(f.acc>=.12){f.acc-=.12;const a=rand(-1.3,1.3);pbullet({x:mx,y:w.y+rand(-.4,.4),vx:Math.cos(a)*14,vy:Math.sin(a)*14,dmg:st.dmg*1.5,kind:'homing',home:true,life:3.4,r:.55,size:1.3});if(((f.n=(f.n||0)+1)%2)===0)sfx.shoot()}if(w===P)cat.state.shoot=1}
+    else{gigHold(mx,w.y,.12);cat.state.shoot=w===P?1:cat.state.shoot;
+      if(f.acc>=.2){f.acc-=.2;for(const e of enemies.slice()){if(e.crate||e.x>B.r+1.5||e.x<B.l-1)continue;hitEnemy(e,e.kind==='boss'?4:6,true);for(let k=0;k<3;k++)lzEmit(e.x,e.y+rand(-.5,.5),rand(-4,4),rand(-4,4),rand(.4,.8),pick(['#bff6ff','#5ff2c8']),rand(.3,.5),true)}
+        for(let j=eb.length-1;j>=0;j--){burst(eb[j].x,eb[j].y,'#ffffff',2,3,.12,.25);dropBullet(eb,j)}sfx.zap();shake=Math.max(shake,.3)}}
+  }
+}
+function drawMana(){
+  const m=clamp(P.mana||0,0,MANA_MAX),full=m>=MANA_MAX-.01,k=Math.floor(m)+(full?1000:0)+OPT.ship*2000;if(k===lastMana)return;lastMana=k;
+  $('#manaFill').style.width=m+'%';$('#manaBar').classList.toggle('full',full);$('#manaTxt').textContent=full?'SKILL READY':'MANA '+Math.floor(m);
+  const b=$('#skillBtn');b.style.setProperty('--m',m);b.classList.toggle('full',full);$('#skillName').textContent=full?SKILL_NAMES[OPT.ship]:'';
+}
+function trySkill(){
+  if(state!=='playing')return;
+  if(NET.role==='guest'){if((P.mana||0)>=MANA_MAX-.01&&!(P.down>0))netSend({t:'sk'});return}
+  if(P.down>0||P.intro>0)return;castSkill(P);
+}
+$('#skillBtn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();trySkill()});
+$('#skillBtn').addEventListener('click',e=>e.preventDefault());
 function hurtPlayer(){
   if(P.inv>0||state!=='playing')return false;
   if(P.shield>0){P.shield=0;P.inv=.7;ring(P.x,P.y,'#ff9ec0',4,.5);sfx.hit();drawChips();return true}
@@ -1404,7 +1480,7 @@ function updatePlay(dt){
   if(P.intro>0){P.intro-=dt;const k=1-Math.exp(-dt*7);P.x+=(B.l+3.6-P.x)*k;P.y+=(0-P.y)*k;P.vx=P.vy=0}
   else{const k=1-Math.exp(-dt*14);P.vx+=(ix*s.speed-P.vx)*k;P.vy+=(iy*s.speed-P.vy)*k;P.x+=P.vx*dt;P.y+=P.vy*dt}
   P.x=clamp(P.x,B.l+1.4+(allies.length?3.2:0),B.r-1.6);P.y=clamp(P.y,B.b+1.2,B.t-1.4);
-  dropCD-=dt;if(P.down>0){P.down-=dt;P.inv=99;if(P.down<=0)reviveP1()}else P.inv=Math.max(0,P.inv-dt);if(P.shield>0)P.shield=Math.max(0,P.shield-dt);if(P.rapidT>0)P.rapidT=Math.max(0,P.rapidT-dt);
+  dropCD-=dt;if(P.down>0){P.down-=dt;P.inv=99;if(P.down<=0)reviveP1()}else P.inv=Math.max(0,P.inv-dt);if(P.shield>0)P.shield=Math.max(0,P.shield-dt);if(P.rapidT>0)P.rapidT=Math.max(0,P.rapidT-dt);if(P.fz>0){P.fz=Math.max(0,P.fz-dt);if(Math.random()<dt*45)emit(P.x-.4,P.y+rand(-.8,.8),rand(-1,1),rand(1,3),rand(.08,.14),pick(['#ffe27a','#ff8fc0','#ffffff']),.4,0)}
   if(P.sp){P.spT-=dt;if(P.spT<=0){const nm=PKN[P.sp].replace('!','');loseSpecial();toast(nm+' wore off');sfx.lose()}}
   const hold=(keys.fire||touch||SET.auto)&&P.intro<=0&&!(P.down>0);
   P.fireT-=dt;if(ST().charge&&(!P.sp||P.sp==='cats'))chargeStep(dt,hold,ST());else{if(P.ch){P.ch=0;chOrb.visible=false}if(hold&&P.fireT<=0)fire()}
@@ -1418,6 +1494,7 @@ function updatePlay(dt){
       for(let i=eb.length-1;i>=0;i--)if(eb[i].x>mx&&Math.abs(eb[i].y-P.y)<.7){burst(eb[i].x,eb[i].y,'#ffffff',3,3,.14,.3);dropBullet(eb,i)}
       emit(mx+rand(0,len*.5),P.y+rand(-.3,.3),0,rand(-1,3),.12,'#e6d4ff',.3,0)}
   }
+  skillsUpdate(dt);
   if(Math.random()<dt*20)emit(P.x-1.5,P.y+rand(-.2,.2),-rand(3,5),rand(-.5,.5),rand(.08,.16),pick([OPT.hull,'#ffffff']),.6,0);
   director(dt);updateEnemies(dt);moveBullets(dt);updatePickups(dt);updateAllies(dt,U.time.value);
   for(let i=pb.length-1;i>=0;i--){const b=pb[i];
@@ -1543,11 +1620,13 @@ $('#randBtn').onclick=()=>{
 
 /* ---------- settings ---------- */
 function applySettings(){
-  store.set('dp.set',SET);$('#setVol').value=Math.round(SET.vol*100);
+  store.set('dp.set',SET);$('#setVol').value=Math.round(SET.vol*100);$('#setMus').value=Math.round(SET.mus*100);$('#setSfx').value=Math.round(SET.sfx*100);
   $('#setShake').setAttribute('aria-pressed',String(SET.shake));$('#setAuto').setAttribute('aria-pressed',String(SET.auto));
   $('#setQ').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===SET.q)));
   applyVol();setQuality();layout();
 }
+$('#setMus').addEventListener('input',e=>{SET.mus=e.target.value/100;clearTimeout(applySettings.t2);applySettings.t2=setTimeout(()=>store.set('dp.set',SET),150)});
+$('#setSfx').addEventListener('input',e=>{SET.sfx=e.target.value/100;applyVol();clearTimeout(applySettings.t3);applySettings.t3=setTimeout(()=>{store.set('dp.set',SET);ac();sfx.click()},150)});
 $('#setVol').addEventListener('input',e=>{SET.vol=e.target.value/100;applyVol();clearTimeout(applySettings.t);applySettings.t=setTimeout(()=>{store.set('dp.set',SET);ac();sfx.click()},120)});
 $('#setShake').onclick=()=>{SET.shake=!SET.shake;sfx.click();applySettings()};
 $('#setAuto').onclick=()=>{SET.auto=!SET.auto;sfx.click();applySettings()};
@@ -1556,7 +1635,7 @@ $('#setQ').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
 /* ---------- flow ---------- */
 let OPT0=Object.assign({},OPT);
 function updateBestLine(){$('#bestLine').textContent=best?'BEST '+String(best).padStart(6,'0'):''}
-function resetPlayerState(){crateT=24;Object.assign(P,{sp:null,spT:0,rapidT:0,beamT:0,wl:1,shield:0,bN:0,ch:0});clearAllies();beam.visible=lzMuz.visible=chOrb.visible=false;hordeQ=null}
+function resetPlayerState(){crateT=24;skills.length=0;lastMana=-1;lastChips=null;gigT=0;gig.visible=false;Object.assign(P,{mana:0,fz:0,_mf:false,sp:null,spT:0,rapidT:0,beamT:0,wl:1,shield:0,bN:0,ch:0});clearAllies();beam.visible=lzMuz.visible=chOrb.visible=false;hordeQ=null}
 function enterTitle(){
   coopStop();clearWorld();resetPlayerState();state='title';timeScale=1;boss=null;sceneryVisible(true);scenerySet(0);lastBiome=0;rebuildRig();
   show('#title',true);show('#maker',false);show('#hud',false);show('#bossBar',false);show('#setScr',false);show('#pauseScr',false);show('#overScr',false);show('#stick',false);keys.fire=false;updateBestLine();
@@ -1568,7 +1647,7 @@ function enterMaker(from){
 function startGame(){
   ac();sfx.click();clearWorld();resetPlayerState();sceneryVisible(true);scenerySet(0);lastBiome=0;rebuildRig();const s=ST();
   Object.assign(P,{hp:s.hp,max:s.hp,hit:s.hit,inv:1.2,fireT:0,vx:0,vy:0,x:rig.position.x,y:rig.position.y,intro:.8});
-  bossCount=0;dropCD=10;score=0;kills=0;elapsed=0;diff=0;wave=1;spawnT=1.2;rockT=1;bossAt=2500;boss=null;timeScale=1;lastScore=-1;lastChips='';
+  bossCount=0;dropCD=10;score=0;kills=0;elapsed=0;diff=0;wave=1;spawnT=1.2;rockT=1;bossAt=2500;boss=null;timeScale=1;lastScore=-1;lastChips=null;
   state='playing';show('#title',false);show('#maker',false);show('#overScr',false);show('#pauseScr',false);show('#hud',true);show('#bossBar',false);
   drawPaws();drawChips();setScore();banner(BIOMES[0].name,'ZONE 1');P.down=0;
   if(NET.role==='host')coopHostBegin();
@@ -1637,6 +1716,7 @@ function menuKey(e){
 }
 window.addEventListener('keydown',e=>{
   if(e.target&&e.target.tagName==='TEXTAREA'){if(e.key==='Escape'){e.target.blur();e.preventDefault()}return}
+  if(state==='playing'&&!e.repeat&&(e.key==='e'||e.key==='E'||e.key==='k'||e.key==='K'||e.key==='Shift'||e.key==='x'||e.key==='X')){trySkill();e.preventDefault();return}
   if(state!=='playing'&&menuKey(e))return;
   if(state==='playing'&&document.activeElement&&document.activeElement.tagName==='BUTTON')document.activeElement.blur();
   if(e.target&&e.target.tagName==='INPUT'&&e.target.type!=='range')return;
@@ -1670,7 +1750,7 @@ function musEl(k){
 }
 function musicUpdate(dt){
   if(!musUnlocked)return;
-  const want=(state==='playing'||state==='dying'||state==='paused')?'game':'menu',top=muted?0:SET.vol*.6;
+  const want=(state==='playing'||state==='dying'||state==='paused')?'game':'menu',top=muted?0:SET.vol*SET.mus*.75;
   for(const k of ['menu','game']){
     const a=musEl(k);if(a._bad)continue;
     const target=k===want?top*(state==='paused'?.45:1):0;
@@ -1705,7 +1785,7 @@ let splashOn=true;
 })();
 function frame(){
   requestAnimationFrame(frame);
-  const dt=Math.min(clock.getDelta(),.05);U.time.value+=dt;musicUpdate(dt);
+  const dt=Math.min(clock.getDelta(),.05);U.time.value+=dt;musicUpdate(dt);gigUpdate(dt);
   if(state==='paused'){renderer.render(scene,camera);return}
 
   const sdt=dt*timeScale,playing=state==='playing'||state==='dying'||state==='over';
@@ -1871,6 +1951,7 @@ function onNetMsg(txt){
   if(typeof txt!=='string'||txt.length>200000)return;let m;try{m=JSON.parse(txt)}catch(e){return}if(!m||typeof m.t!=='string')return;
   if(NET.role==='host'){
     if(m.t==='hello'){NET.guestOpt=cleanOpt(m.opt);show('#coopScr',false);startGame()}
+    else if(m.t==='sk'&&P2&&P2.alive){castSkill(P2)}
     else if(m.t==='in'&&P2){P2.nx=num(m.x);P2.ny=num(m.y);P2.fire=!!m.f}
   }else if(NET.role==='guest'){
     if(m.t==='init')startGuest(cleanOpt(m.opt));
@@ -1902,12 +1983,12 @@ function turboAt(x,y,dt,th,hull){
 /* ---------- host side ---------- */
 function coopHostBegin(){
   const so=SHIPS[NET.guestOpt.ship];
-  P2={x:B.l+3.6,y:-2.2,vx:0,vy:0,nx:.18,ny:.4,hp:so.hp,max:so.hp,hit:so.hit,inv:1.2,fireT:0,wl:1,shield:0,rapidT:0,fire:false,alive:true,down:0,st:so};
+  P2={mana:0,fz:0,x:B.l+3.6,y:-2.2,vx:0,vy:0,nx:.18,ny:.4,hp:so.hp,max:so.hp,hit:so.hit,inv:1.2,fireT:0,wl:1,shield:0,rapidT:0,fire:false,alive:true,down:0,st:so};
   buildRig2(NET.guestOpt);rig2.g.position.set(P2.x,P2.y,0);NET.snapT=0;NET.evq=[];
   netSend({t:'init',opt:OPT});
 }
 function fireP2(){
-  const s=P2.st,rf=P2.rapidT>0?.55:1,nB=clamp(P2.wl+s.extra,1,9),mx=P2.x+rig2.ship.muzzle*.7,big=NET.guestOpt.ship===2;P2.fireT=s.rate*rf;if(s.charge){pbullet({x:mx,y:P2.y,vx:s.bspeed,vy:0,dmg:s.dmg*3,kind:'charge',pierce:true,tick:.35,size:3,r:.6});rig2.cat.state.shoot=1;sfx.shoot();return}
+  const s=P2.st,rf=(P2.rapidT>0?.55:1)*fzMul(P2),nB=clamp(P2.wl+s.extra,1,9),mx=P2.x+rig2.ship.muzzle*.7,big=NET.guestOpt.ship===2;P2.fireT=s.rate*rf;if(s.charge){pbullet({x:mx,y:P2.y,vx:s.bspeed,vy:0,dmg:s.dmg*3,kind:'charge',pierce:true,tick:.35,size:3,r:.6});rig2.cat.state.shoot=1;sfx.shoot();return}
   for(let i=0;i<nB;i++){const c=i-(nB-1)/2,a=c*s.spread;pbullet({x:mx,y:P2.y+c*.12,vx:Math.cos(a)*s.bspeed,vy:Math.sin(a)*s.bspeed,dmg:s.dmg*(nB>=7?1.15:1),kind:'bullet',color:'#6fe0ff',size:big?1.7:1.5,r:big?.5:.42})}
   muzzle(mx,P2.y,'#6fe0ff',4);rig2.cat.state.shoot=1;sfx.shoot();
 }
@@ -1923,7 +2004,7 @@ function p2Down(){
 }
 function collectP2(k,x,y){
   sfx.pickup();ring(x,y,PK[k],2.6,.4);burst(x,y,PK[k],10,5,.22,.5);
-  if(k==='fish')P2.hp=Math.min(P2.max,P2.hp+1);else if(k==='catnip')P2.wl=Math.min(5,P2.wl+1);else if(k==='yarn')P2.shield=7;else P2.rapidT=12;score+=25;
+  if(k==='fish')P2.hp=Math.min(P2.max,P2.hp+1);else if(k==='catnip')P2.wl=Math.min(5,P2.wl+1);else if(k==='yarn')P2.shield=7;else if(k==='mana'||k==='manaL'){P2.mana=Math.min(MANA_MAX,(P2.mana||0)+(k==='manaL'?20:6))}else P2.rapidT=12;score+=25;
 }
 function coopIntercept(){
   if(NET.role==='host'&&P2&&P2.alive&&!(P.down>0)){
@@ -1940,7 +2021,7 @@ function coopHost(dt){
   if(P2.alive){
     const k=1-Math.exp(-dt*16),tx=clamp(fxOf(P2.nx),B.l+1.4,B.r-1.6),ty=clamp(fyOf(P2.ny),B.b+1.2,B.t-1.4);
     P2.vx=(tx-P2.x)*8;P2.x+=(tx-P2.x)*k;P2.y+=(ty-P2.y)*k;
-    P2.inv=Math.max(0,P2.inv-dt);if(P2.shield>0)P2.shield=Math.max(0,P2.shield-dt);if(P2.rapidT>0)P2.rapidT=Math.max(0,P2.rapidT-dt);
+    P2.inv=Math.max(0,P2.inv-dt);if(P2.shield>0)P2.shield=Math.max(0,P2.shield-dt);if(P2.rapidT>0)P2.rapidT=Math.max(0,P2.rapidT-dt);if(P2.fz>0)P2.fz=Math.max(0,P2.fz-dt);
     P2.fireT-=dt;if(P2.fire&&P2.fireT<=0)fireP2();
     for(let i=eb.length-1;i>=0;i--){const b=eb[i];if(Math.hypot(b.x-P2.x,b.y-P2.y)<b.r+P2.hit*.85&&hurtP2()){dropBullet(eb,i);if(!P2.alive)break}}
     if(P2.alive&&P2.inv<=0)for(const e of enemies){if(Math.hypot(e.x-P2.x,e.y-P2.y)<e.r+P2.hit*.9){if(hurtP2()&&e.kind!=='boss')hitEnemy(e,e.rock?e.hp:3);break}}
@@ -1956,8 +2037,8 @@ function makeSnap(){
   const E=[];for(const e of enemies){if(E.length>=45)break;if(e.crate)continue;E.push([e.id,e.rock?'r'+e.size:e.kind,r3(nxOf(e.x)),r3(nyOf(e.y)),e.kind==='boss'?(e.variant||0):0])}
   const PB=pb.slice(0,90).map(b=>[b.id,r3(nxOf(b.x)),r3(nyOf(b.y)),b.col==='#6fe0ff'?'c':b.kind==='bullet'?'b':b.kind==='ally'?'a':b.kind==='wave'?'w':b.kind==='homing'?'h':b.kind==='charge'?'g':'f']);
   const EB=eb.slice(0,90).map(b=>[b.id,r3(nxOf(b.x)),r3(nyOf(b.y)),'e']);
-  const PKs=pickups.slice(0,12).map(p=>[p.id,p.kind,r3(nxOf(p.x)),r3(nyOf(p.y))]);
-  const m={t:'s',ht:Math.round(performance.now())/1000,sc:score,k:kills,w:wave,d:r3(diff),bi:SC.fading?SC.next:SC.cur,p1:[r3(nxOf(P.x)),r3(nyOf(P.y)),P.hp,P.down>0?1:0],p2:[P2?P2.hp:0,P2&&P2.alive?0:1,P2?P2.max:0],E,PB,EB,PK:PKs,ev:NET.evq.slice(-40)};
+  const PKs=pickups.slice(0,24).map(p=>[p.id,p.kind,r3(nxOf(p.x)),r3(nyOf(p.y))]);
+  const m={t:'s',ht:Math.round(performance.now())/1000,sc:score,k:kills,w:wave,d:r3(diff),bi:SC.fading?SC.next:SC.cur,p1:[r3(nxOf(P.x)),r3(nyOf(P.y)),P.hp,P.down>0?1:0],p2:[P2?P2.hp:0,P2&&P2.alive?0:1,P2?P2.max:0,P2?Math.floor(P2.mana||0):0],E,PB,EB,PK:PKs,ev:NET.evq.slice(-40)};
   NET.evq=[];if(boss){m.bf=r3(Math.max(0,boss.hp/boss.max));m.bn=boss.name||'BOSS'}return m;
 }
 function coopOver(){
@@ -1978,7 +2059,7 @@ function startGuest(hopt){NET.off=null;
   clearGuestWorld();clearWorld();resetPlayerState();sceneryVisible(true);scenerySet(0);lastBiome=0;rebuildRig();buildRig2(hopt);
   rig2.g.position.set(B.l+3.6,2.2,0);NET.p1t={tx:B.l+3.6,ty:2.2,ts:performance.now()};
   const s=ST();Object.assign(P,{hp:s.hp,max:s.hp,hit:s.hit,inv:0,fireT:0,vx:0,vy:0,x:B.l+3.6,y:-2.2,intro:0,down:0});
-  score=0;kills=0;elapsed=0;diff=0;wave=1;boss=null;timeScale=1;lastScore=-1;lastChips='';gBossShown=false;state='playing';
+  score=0;kills=0;elapsed=0;diff=0;wave=1;boss=null;timeScale=1;lastScore=-1;lastChips=null;gBossShown=false;state='playing';
   ['#coopScr','#title','#maker','#overScr','#pauseScr','#bossBar'].forEach(i=>show(i,false));show('#hud',true);
   drawPaws();drawChips();setScore();
 }
@@ -2018,7 +2099,7 @@ function applySnap(m){
   const now=ht;gSnap=m;score=m.sc|0;kills=m.k|0;wave=m.w|0;diff=+m.d||0;
   if(Number.isInteger(m.bi)&&m.bi>=0&&m.bi<BIOMES.length&&m.bi!==lastBiome&&!SC.fading){lastBiome=m.bi;sceneryGoto(m.bi)}
   if(Array.isArray(m.p1)&&rig2){if(!NET.p1t)NET.p1t={};trackSet(NET.p1t,fxOf(num(m.p1[0])),fyOf(num(m.p1[1])),now);rig2.g.visible=!m.p1[3]}
-  if(Array.isArray(m.p2)){const h2=m.p2[0]|0;if(h2<P.hp&&h2>0){cat.state.hurt=.6;sq.kick(-5);shake=Math.max(shake,.6)}if(h2!==P.hp||(m.p2[2]|0)!==P.max){P.hp=h2;P.max=m.p2[2]|0||P.max;drawPaws()}P.down=m.p2[1]?1:0;P.inv=0}
+  if(Array.isArray(m.p2)){const h2=m.p2[0]|0;if(h2<P.hp&&h2>0){cat.state.hurt=.6;sq.kick(-5);shake=Math.max(shake,.6)}if(h2!==P.hp||(m.p2[2]|0)!==P.max){P.hp=h2;P.max=m.p2[2]|0||P.max;drawPaws()}P.down=m.p2[1]?1:0;P.inv=0;P.mana=clamp(+m.p2[3]||0,0,MANA_MAX)}
   const seen=new Set();
   for(const a of m.E){if(!Array.isArray(a)||typeof a[1]!=='string')continue;const id=a[0]|0;seen.add(id);let o=gEnemies.get(id);
     if(!o){o=mkGuestEnemy(a[1].slice(0,6),a[4]);if(!o)continue;o.fresh=true;gEnemies.set(id,o)}
@@ -2037,7 +2118,8 @@ function applySnap(m){
     else if(ev[0]==='b')_banner(esc(ev[1]),esc(ev[2]));
     else if(ev[0]==='t')_toast(esc(ev[1]));
     else if(ev[0]==='m')_hitmark(fxOf(num(ev[1])),fyOf(num(ev[2])),!!ev[3]);
-    else if(ev[0]==='k')guestKill(ev)}
+    else if(ev[0]==='k')guestKill(ev)
+    else if(ev[0]==='z'){gigHold(fxOf(num(ev[1])),fyOf(num(ev[2])),clamp(+ev[3]||1.4,.2,2));flashFx()}}
 }
 function guestKill(ev){
   const X=fxOf(num(ev[1])),Y=fyOf(num(ev[2])),kind=String(ev[3]).slice(0,8),col=/^#[0-9a-f]{6}$/i.test(ev[5])?ev[5]:'#f08a3a',r=clamp(+ev[6]||1,.3,4);
@@ -2103,6 +2185,6 @@ SCREENS.unshift('#instScr');
 layout();applySettings();enterTitle();frame();
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(state==='title'||state==='maker')rebuildRig()});
 setTimeout(()=>focusPref(activeScreen()),400);
-window.__dp={get gPB(){return gPB},get gEnemies(){return gEnemies},NET,get P2(){return P2},snap:()=>makeSnap(),get boss(){return boss},B,bossN(n){clearWorld();bossCount=n;startBoss()},get state(){return state},OPT,P,SC,startGame,enterMaker,enterTitle,scenerySet,sceneryGoto,die,collect:(k)=>collect(k,P.x,P.y),setDiff(v){elapsed=v*18},get enemies(){return enemies.length},get allies(){return allies.length}};
+window.__dp={castSkill:w=>castSkill(w||P),dropPickup,get skills(){return skills},get enemies2(){return enemies},get gPB(){return gPB},get gEnemies(){return gEnemies},NET,get P2(){return P2},snap:()=>makeSnap(),get boss(){return boss},B,bossN(n){clearWorld();bossCount=n;startBoss()},get state(){return state},OPT,P,SC,startGame,enterMaker,enterTitle,scenerySet,sceneryGoto,die,collect:(k)=>collect(k,P.x,P.y),setDiff(v){elapsed=v*18},get enemies(){return enemies.length},get allies(){return allies.length}};
 })();
 </script>
