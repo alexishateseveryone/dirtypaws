@@ -1687,7 +1687,7 @@ function drawChips(){
   if(P.wl>1)h+='<span class="chip">BULLETS x'+Math.min(9,P.wl+ST().extra)+'</span>';
   if(P.sp)h+='<span class="chip sp">'+PKN[P.sp].replace('!','').toUpperCase()+(P.spT>999?'':' '+Math.ceil(P.spT)+'s')+'</span>';
   if(P.cats)h+='<span class="chip sp">MORE CATS</span>';
-  if(P.cmM>0)h+='<span class="chip sp">MISSILE DRONE '+Math.ceil(P.cmM)+'s</span>';if(P.cmL>0)h+='<span class="chip sp">LASER DRONE '+Math.ceil(P.cmL)+'s</span>';
+  if(P.cmM>0)h+='<span class="chip sp">MISSILE DRONE x'+P.cmM+'</span>';if(P.cmL>0)h+='<span class="chip sp">LASER DRONE x'+P.cmL+'</span>';
   [['magT','MAGNET'],['spdT','ZOOMIES'],['dmgT','POWER'],['prcT','PIERCE'],['bckT','TAIL GUN'],['orbT','ORBIT'],['bigT','MEGA'],['smlT','SMALLER ME']].forEach(([k,n])=>{if(P[k]>0)h+='<span class="chip sp">'+n+' '+Math.ceil(P[k])+'s</span>'});
   if(P.aeg>0&&P.shield>0)h+='<span class="chip sp">AEGIS x'+P.aeg+'</span>';
   if(P.fz>0)h+='<span class="chip sp">SUGAR RUSH '+Math.ceil(P.fz)+'s</span>';
@@ -1725,10 +1725,15 @@ function buildComp(type){
   return{g,type,prop,x:0,y:0,fire:.6};
 }
 function syncComps(){
-  const want=[];if(P.cmM>0)want.push('msl');if(P.cmL>0)want.push('lsr');compKey=want.join();
-  for(let i=comps.length-1;i>=0;i--)if(!want.includes(comps[i].type)){scene.remove(comps[i].g);disposeObj(comps[i].g);comps.splice(i,1)}
-  for(const w of want)if(!comps.some(c=>c.type===w)){const c=buildComp(w);c.g.scale.setScalar(.8);c.x=P.x-1;c.y=P.y;scene.add(c.g);comps.push(c);burst(P.x-1,P.y,['#ffffff',w==='msl'?'#ff9a3a':'#b07aff'],8,4,.2,.5)}
+  const want={msl:P.cmM|0,lsr:P.cmL|0};compKey=want.msl+'|'+want.lsr;
+  for(const ty of ['msl','lsr']){
+    const have=comps.filter(c=>c.type===ty);
+    while(have.length>want[ty]){const c=have.pop();scene.remove(c.g);disposeObj(c.g);comps.splice(comps.indexOf(c),1)}
+    while(have.length<want[ty]){const c=buildComp(ty);c.g.scale.setScalar(.8);c.x=P.x-1;c.y=P.y;c.fire=rand(.3,1);scene.add(c.g);comps.push(c);have.push(c);burst(P.x-1,P.y,['#ffffff',ty==='msl'?'#ff9a3a':'#b07aff'],8,4,.2,.5)}
+  }
 }
+function addDrone(k){const key=k==='msl'?'cmM':'cmL';if((P[key]|0)>=4){score+=250;toast('Max '+PKN[k].replace('!','')+'s! +250');return false}P[key]=(P[key]|0)+1;syncComps();return true}
+function loseDrone(){const lt=comps.length?comps[comps.length-1].type:(P.cmL>0?'lsr':'msl');if(lt==='msl')P.cmM=Math.max(0,P.cmM-1);else P.cmL=Math.max(0,P.cmL-1);syncComps()}
 function compLaser(c,e){
   const sx=c.x+.85,dx=e.x-sx,dy=e.y-c.y,len=Math.hypot(dx,dy)||1,g=new T.Group();
   const o=new T.Mesh(bandGeo,new T.MeshBasicMaterial({map:bandTex,color:'#b07aff',transparent:true,depthWrite:false,opacity:.9})),w=new T.Mesh(bandGeo,new T.MeshBasicMaterial({color:'#f2e8ff',transparent:true,depthWrite:false,opacity:.95}));
@@ -1736,9 +1741,8 @@ function compLaser(c,e){
   hitEnemy(e,2.4*ST().dmg*(P.dmgT>0?1.6:1),true);hitmark(e.x,e.y,true);burst(e.x,e.y,['#d9b8ff','#ffffff'],6,5,.2,.4);muzzle(sx,c.y,'#b07aff',3);sfx.zap();
 }
 function updateComps(dt,t){
-  if(P.cmM>0)P.cmM=Math.max(0,P.cmM-dt);if(P.cmL>0)P.cmL=Math.max(0,P.cmL-dt);
-  const key=[P.cmM>0?'msl':'',P.cmL>0?'lsr':''].filter(Boolean).join();if(key!==compKey)syncComps();
-  comps.forEach((c,i)=>{const o=COMP_OFF[i%2],k=1-Math.exp(-dt*6);
+  if(((P.cmM|0)+'|'+(P.cmL|0))!==compKey)syncComps();
+  comps.forEach((c,i)=>{const row=Math.floor(i/2),o=[-.3-row*.7,(i%2?-1:1)*(1.9+row*1.0)],k=1-Math.exp(-dt*6);
     c.x+=(P.x+o[0]-c.x)*k;c.y+=(P.y+o[1]+Math.sin(t*2.4+i*2)*.2-c.y)*k;c.g.position.set(c.x,c.y,0);c.prop.rotation.y+=dt*30;c.g.rotation.z=-P.vy*.02;
     c.fire-=dt;if(c.fire<=0&&P.intro<=0&&state==='playing'){
       if(c.type==='msl'){c.fire=P.rapidT>0?.75:1.1;pbullet({x:c.x+.9,y:c.y,vx:13,vy:(c.y>P.y?1:-1)*3,dmg:1.3*ST().dmg,kind:'homing',home:true,life:3,r:.5,size:1.05});muzzle(c.x+.9,c.y,'#ff9a3a',4)}
@@ -1869,8 +1873,8 @@ function collect(k,x,y){
   else if(k==='bomb'){bombBlast();toast(PKN[k])}
   else if(k==='aegis'){P.shield=Math.max(P.shield,20);P.aeg=3;sfx.power();toast(PKN[k]+' blocks 3 hits')}
   else if(TMR[k]){P[TMR[k][0]]=TMR[k][1];sfx.power();toast(PKN[k])}
-  else if(k==='msl'){P.cmM=25;syncComps();sfx.power();toast(PKN[k]+' Drone for 25s')}
-  else if(k==='lsr'){P.cmL=25;syncComps();sfx.power();toast(PKN[k]+' Drone for 25s')}
+  else if(k==='msl'){if(addDrone(k)){sfx.power();toast(PKN[k]+' x'+P.cmM+' (until you get hit)')}}
+  else if(k==='lsr'){if(addDrone(k)){sfx.power();toast(PKN[k]+' x'+P.cmL+' (until you get hit)')}}
   else if(k==='cats'){if(P.cats){score+=250;toast('Cats already with you! +250')}else{P.cats=1;spawnAllies();sfx.power();toast('More Cats! They stay until you get hit')}}
   else{if(P.sp&&P.sp!==k)loseSpecial();P.sp=k;P.spT=28;sfx.power();toast(PKN[k]+' Hit = wears off')}
   if(k==='fish')toast(PKN[k]);
@@ -1925,7 +1929,7 @@ function hurtPlayer(){
   if(P.inv>0||state!=='playing')return false;
   if(P.shield>0){if(P.aeg>1)P.aeg--;else{P.aeg=0;P.shield=0}P.inv=.7;ring(P.x,P.y,'#ff9ec0',4,.5);sfx.hit();drawChips();return true}
   if(P.sp){const nm=PKN[P.sp].replace('!','');loseSpecial();P.inv=1.1;shake=.5;sfx.lose();burst(P.x,P.y,[OPT.hull,'#ffffff'],12,6,.3,.7);ring(P.x,P.y,'#ffffff',4,.5);toast(nm+' wore off');drawChips();return true}
-  if(P.cmM>0||P.cmL>0){P.cmM=P.cmL=0;syncComps();P.inv=1.1;shake=.5;sfx.lose();burst(P.x,P.y,[OPT.hull,'#ffffff'],12,6,.3,.7);ring(P.x,P.y,'#ffffff',4,.5);toast('Drones wore off');drawChips();return true}
+  if(P.cmM>0||P.cmL>0){loseDrone();P.inv=1.1;shake=.5;sfx.lose();burst(P.x,P.y,[OPT.hull,'#ffffff'],12,6,.3,.7);ring(P.x,P.y,'#ffffff',4,.5);toast('Drone lost! '+((P.cmM|0)+(P.cmL|0))+' left');drawChips();return true}
   if(P.cats){loseCats();P.inv=1.1;shake=.5;sfx.lose();burst(P.x,P.y,[OPT.hull,'#ffffff'],12,6,.3,.7);ring(P.x,P.y,'#ffffff',4,.5);toast('Cats wore off');drawChips();return true}
   P.hp--;P.inv=1.6;shake=.7;cat.state.hurt=.6;sq.kick(-5);sfx.hurt();
   burst(P.x,P.y,[OPT.hull,'#ffffff'],14,6,.3,.8);drawPaws();drawChips();
@@ -2579,8 +2583,8 @@ function collectP2(k,x,y){
   else if(k==='bomb'){bombBlast(P2.x,P2.y);toast(W+PKN[k])}
   else if(k==='aegis'){P2.shield=Math.max(P2.shield,20);P2.aeg=3;sfx.power();toast(W+PKN[k]+' blocks 3 hits')}
   else if(TMR[k]){P2[TMR[k][0]]=TMR[k][1];sfx.power();toast(W+PKN[k])}
-  else if(k==='msl'){P.cmM=25;syncComps();sfx.power();toast(W+PKN[k]+' Drone for the team')}
-  else if(k==='lsr'){P.cmL=25;syncComps();sfx.power();toast(W+PKN[k]+' Drone for the team')}
+  else if(k==='msl'){if(addDrone(k)){sfx.power();toast(W+PKN[k]+' Drone x'+P.cmM)}}
+  else if(k==='lsr'){if(addDrone(k)){sfx.power();toast(W+PKN[k]+' Drone x'+P.cmL)}}
   else if(k==='cats'){if(P.cats){score+=250;toast('Team already has cats! +250')}else{P.cats=1;spawnAllies();sfx.power();toast(W+'More Cats for the team!')}}
   else{P2.sp=k;P2.spT=28;sfx.power();toast(W+PKN[k]+' Hit = wears off')}
   score+=25;
